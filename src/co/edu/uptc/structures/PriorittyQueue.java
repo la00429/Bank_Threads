@@ -8,7 +8,6 @@ public class PriorittyQueue<T> {
     }
 
     public void push(T data, int levelPriority) {
-        Node<T> node = new Node<T>(data);
         if (queues.length - 1 >= levelPriority) {
             if (queues[levelPriority] == null) {
                 queues[levelPriority] = new MyQueue<T>();
@@ -28,7 +27,7 @@ public class PriorittyQueue<T> {
                 queueAux = queue;
             }
         }
-        return !queueAux.isEmpty()? queueAux.poll() : null;
+        return queueAux.poll();
     }
 
 
@@ -43,7 +42,7 @@ public class PriorittyQueue<T> {
                 }
             }
         } else {
-            while (queueTemp.isEmpty()) {
+            while (queueTemp.isEmpty() && level < queues.length - 1) {
                 level++;
                 queueTemp = queues[level];
             }

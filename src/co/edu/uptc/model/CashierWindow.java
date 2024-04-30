@@ -23,7 +23,7 @@ public class CashierWindow extends Thread{
     public synchronized boolean attendUser(User user){
         this.isAvailable = false;
         try {
-            Thread.sleep(calculateTimeAttention(user.getTransactionAmount()));
+            sleep(calculateTimeAttention(user.getTransactionAmount()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -34,7 +34,7 @@ public class CashierWindow extends Thread{
     }
     public long calculateTimeAttention(int transactionAmount){
         Random random = new Random();
-        long timeAttention = (long) transactionAmount / 100 * 100;
+        long timeAttention = (long) transactionAmount / 10;
         long timeRandom = Math.abs(random.nextLong()) % 1001;
         return timeAttention + timeRandom;
     }

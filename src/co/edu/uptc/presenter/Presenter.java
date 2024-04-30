@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Presenter{
-    /*// cargar usuaurai
-    new Bank().accessUsers();*/
+import static java.lang.Thread.sleep;
+
+public class Presenter {
     private Bank bank;
     private View view;
 
@@ -18,54 +18,51 @@ public class Presenter{
         this.view = new View();
     }
 
-    public void startSimulation(){
-        long timeSimulation  = Long.parseLong( view.readData("Input time of simulation in miliseconds: "));
-
+    public void startSimulation() {
+        long timeSimulation = Long.parseLong(view.readData("Input time of simulation in miliseconds: "));
         int quantityWindows = Integer.parseInt(view.readData("Input number of cashiers: "));
         long timeInitial = System.currentTimeMillis();
-        bank = new Bank(loadUsers(quantityWindows),quantityWindows);
+        bank = new Bank(loadUsers(quantityWindows), quantityWindows);
+        new Thread(this::accessUser).start();
+        closeBank(timeSimulation, timeInitial);
+        showStatistics(timeSimulation, quantityWindows);
+    }
 
-        new Thread(() -> {
-            while (bank.isAliveBank()) {
-                User user = new User(new Random().nextInt(4), new Random().nextInt(1000));
-                bank.accessUser(user);
-
-                try {
-                    Thread.sleep(20); // Esperar 0.2 segundos antes de agregar otro usuario
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+    private void accessUser() {
+        while (bank.isAliveBank()) {
+            User user = new User(new Random().nextInt(4), new Random().nextInt(1000));
+            bank.accessUser(user);
+            try {
+                sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        }).start();
-        boolean timeFinish = closeBank(timeSimulation, timeInitial);
-        if (timeFinish){
-            bank.closeBank();
-            showStatistics(timeSimulation, quantityWindows);
         }
     }
 
-    public List<User> loadUsers(int quantityPriority){
+    public List<User> loadUsers(int quantityPriority) {
         List<User> users = new ArrayList<User>();
-        int quantityUsers = (int) (Math.random() * 10);
+        int quantityUsers = (int) (Math.random() * 100);
         for (int i = 0; i < quantityUsers; i++) {
-            User user = new User(new Random().nextInt(quantityPriority+1), new Random().nextInt(1000));
+            User user = new User(new Random().nextInt(quantityPriority + 1), new Random().nextInt(1000));
             users.add(user);
         }
         return users;
     }
 
-    public boolean closeBank(long timeSimulation, long timeInitial){
+    public boolean closeBank(long timeSimulation, long timeInitial) {
         while (System.currentTimeMillis() - timeInitial < timeSimulation && bank.isAliveBank()) {
             try {
-                Thread.sleep(100); // Esperar 100 milisegundos antes de verificar nuevamente
+                sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+        bank.closeBank();
         return true;
     }
 
-    public synchronized static void randomUsers(Bank bank){
+    public synchronized static void randomUsers(Bank bank) {
         int quantityUsers = (int) (Math.random() * 10);
         for (int i = 0; i < quantityUsers; i++) {
             User user = new User(new Random().nextInt(4), new Random().nextInt(1000));
@@ -73,7 +70,7 @@ public class Presenter{
         }
     }
 
-    public void showStatistics(long timeSimulation, int quantityWindows){
+    public void showStatistics(long timeSimulation, int quantityWindows) {
         view.showMessage("-----------------Statistics------------------");
         view.showMessage("1. Time of simulation: " + timeSimulation + " miliseconds");
         view.showMessage("2. Number of cashiers windows opened: " + quantityWindows);

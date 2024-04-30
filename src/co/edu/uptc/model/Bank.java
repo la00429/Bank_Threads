@@ -6,6 +6,8 @@ import co.edu.uptc.structures.PriorittyQueue;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Thread.sleep;
+
 public class Bank implements Runnable{
     private Thread bank;
     private PriorittyQueue<User> queueUsers;
@@ -45,7 +47,8 @@ public class Bank implements Runnable{
     public synchronized void attendUser(){
         while (!queueUsers.isEmpty()) {
             try {
-                attendUser(queueUsers.pull());
+                attendUser(queueUsers.peek());
+                sleep(3000);
             } catch (InterruptedException e) {
                 e.getMessage();
             }
@@ -53,24 +56,28 @@ public class Bank implements Runnable{
     }
 
 
-
-    public synchronized void attendUser(User user) throws InterruptedException {
+    public void attendUser(User user) throws InterruptedException {
         if (user != null && !queueUsers.isEmpty()) {
             User userToAttend = queueUsers.pull();
             countUserAttended++;
             for (int i = 0; i < cashierWindows.length ; i++) {
-                if (cashierWindows[i].getPriorityWindow() == userToAttend.getPriority()) {
-                    if (cashierWindows[i].isAvailable()) {
-                        cashierWindows[i].attendUser(userToAttend);
-                    }
-                }else {
-                    if (cashierWindows[i].isAvailable()) {
-                        searchCashierEnable().attendUser(userToAttend);
+                synchronized (cashierWindows[i]) {
+                    if (cashierWindows[i].getPriorityWindow() == userToAttend.getPriority()) {
+                        if (cashierWindows[i].isAvailable()) {
+                            cashierWindows[i].attendUser(userToAttend);
+                            break;
+                        }
+                    } else {
+                        if (cashierWindows[i].isAvailable()) {
+                            searchCashierEnable().attendUser(userToAttend);
+                            break;
+                        }
                     }
                 }
             }
         }
     }
+
 
     private CashierWindow searchCashierEnable(){
         CashierWindow cashierWindowEnable = new CashierWindow("",0);
