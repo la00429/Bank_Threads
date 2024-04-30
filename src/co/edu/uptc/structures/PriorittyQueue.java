@@ -13,6 +13,8 @@ public class PriorittyQueue<T> {
             if (queues[levelPriority] == null) {
                 queues[levelPriority] = new MyQueue<T>();
                 queues[levelPriority].push(data);
+            }else {
+                queues[levelPriority].push(data);
             }
         }
     }
@@ -26,7 +28,7 @@ public class PriorittyQueue<T> {
                 queueAux = queue;
             }
         }
-        return queueAux.poll();
+        return !queueAux.isEmpty()? queueAux.poll() : null;
     }
 
 

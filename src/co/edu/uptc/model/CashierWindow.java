@@ -20,15 +20,17 @@ public class CashierWindow extends Thread{
         super.run();
     }
 
-    public  void attendUser(User user){
+    public synchronized boolean attendUser(User user){
         this.isAvailable = false;
         try {
             Thread.sleep(calculateTimeAttention(user.getTransactionAmount()));
         } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         this.isAvailable = true;
         this.countUserAttended++;
         this.notify();
+        return isAvailable;
     }
     public long calculateTimeAttention(int transactionAmount){
         Random random = new Random();

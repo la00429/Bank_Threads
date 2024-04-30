@@ -10,36 +10,39 @@ public class Bank implements Runnable{
     private Thread bank;
     private PriorittyQueue<User> queueUsers;
     private CashierWindow[] cashierWindows;
+    private int countUserAccess;
+    private int countUserAttended;
 
 
-    public Bank(String name, List<Object> queueUsers, int quantityWindows){
-        super(name);
+    public Bank(List<User> queueUsers, int quantityWindows){
+        super();
         this.queueUsers = accessUser(queueUsers, quantityWindows);
         this.cashierWindows = new CashierWindow[quantityWindows];
+        bank = new Thread(this);
+        bank.start();
 
     }
 
-    private PriorittyQueue<User> accessUser(List<Object> queueUsers, int quantityWindows){
+    private PriorittyQueue<User> accessUser(List<User> queueUsers, int quantityWindows){
         this.queueUsers = new PriorittyQueue<>(quantityWindows);
-        for (Object user : queueUsers) {
-            accessUser((User) user);
+        for (User user : queueUsers) {
+            accessUser(user);
         }
         return this.queueUsers;
     }
-    public void accessUser(User user){
+    public synchronized void accessUser(User user){
         queueUsers.push(user, user.getPriority());
+        countUserAccess++;
     }
 
 
     @Override
     public void run() {
-        super.run();
-//        Presenter.loadUsers(this);
         openWindows();
         attendUser();
     }
 
-    public void attendUser(){
+    public synchronized void attendUser(){
         while (!queueUsers.isEmpty()) {
             try {
                 attendUser(queueUsers.pull());
@@ -51,30 +54,39 @@ public class Bank implements Runnable{
 
 
 
-    public void attendUser(User user) throws InterruptedException {
-        User userToAttend = queueUsers.pull();
-        System.out.println(userToAttend.getPriority());
-        for (int i = 0; i < cashierWindows.length; i++) {
-            if (cashierWindows[i].getPriorityWindow() == userToAttend.getPriority()) {
-                if (cashierWindows[i].isAvailable()) {
-                    cashierWindows[i].attendUser(userToAttend);
-                } else {
-                    this.bank.sleep(cashierWindows[i].calculateTimeAttention(userToAttend.getTransactionAmount()));
-                }
-            }else {
-                if (cashierWindows[i].isAvailable()) {
-                    cashierWindows[cashierWindows.length-1].attendUser(userToAttend);
-                } else {
-                    this.bank.sleep(cashierWindows[i].calculateTimeAttention(userToAttend.getTransactionAmount()));
+    public synchronized void attendUser(User user) throws InterruptedException {
+        if (user != null && !queueUsers.isEmpty()) {
+            User userToAttend = queueUsers.pull();
+            countUserAttended++;
+            for (int i = 0; i < cashierWindows.length ; i++) {
+                if (cashierWindows[i].getPriorityWindow() == userToAttend.getPriority()) {
+                    if (cashierWindows[i].isAvailable()) {
+                        cashierWindows[i].attendUser(userToAttend);
+                    }
+                }else {
+                    if (cashierWindows[i].isAvailable()) {
+                        searchCashierEnable().attendUser(userToAttend);
+                    }
                 }
             }
-
         }
-
     }
+
+    private CashierWindow searchCashierEnable(){
+        CashierWindow cashierWindowEnable = new CashierWindow("",0);
+        for (CashierWindow cashierWindow : cashierWindows){
+            if (cashierWindow.isAvailable()){
+                cashierWindowEnable = cashierWindow;
+            }
+        }
+        return cashierWindowEnable;
+    }
+
+
 
     private void openWindows(){
         for (int i = 0; i < cashierWindows.length; i++) {
+            cashierWindows[i] = new CashierWindow("Cashier " + i, i);
             cashierWindows[i].start();
         }
     }
@@ -86,5 +98,18 @@ public class Bank implements Runnable{
         this.bank.interrupt();
     }
 
+    public int getCountUserAccess() {
+        return countUserAccess;
+    }
+    public int getCountUserAttended() {
+        return countUserAttended;
+    }
 
+    public int countUserNotAttended() {
+        return countUserAccess - countUserAttended;
+    }
+
+    public boolean isAliveBank() {
+        return bank.isAlive();
+    }
 }
