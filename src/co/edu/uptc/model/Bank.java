@@ -22,12 +22,13 @@ public class Bank implements Runnable{
     private PriorittyQueue<User> accessUser(List<Object> queueUsers, int quantityWindows){
         this.queueUsers = new PriorittyQueue<>(quantityWindows);
         for (Object user : queueUsers) {
-            this.queueUsers.push(new User(((User) user).getPriority(), ((User) user).getTransactionAmount()), ((User) user).getPriority());
+            accessUser((User) user);
         }
         return this.queueUsers;
     }
-
-//    public accessUser
+    public void accessUser(User user){
+        queueUsers.push(user, user.getPriority());
+    }
 
 
     @Override
@@ -48,9 +49,7 @@ public class Bank implements Runnable{
         }
     }
 
-    public void accessUser(User user){
-        queueUsers.push(user, user.getPriority());
-    }
+
 
     public void attendUser(User user) throws InterruptedException {
         User userToAttend = queueUsers.pull();
